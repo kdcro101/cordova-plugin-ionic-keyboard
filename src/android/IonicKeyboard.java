@@ -1,25 +1,24 @@
 package io.ionic.keyboard;
 
+import android.content.Context;
+import android.graphics.Point;
+import android.graphics.Rect;
+import android.os.Build;
+import android.util.DisplayMetrics;
+import android.view.Display;
+import android.view.View;
+import android.view.ViewTreeObserver.OnGlobalLayoutListener;
+import android.view.inputmethod.InputMethodManager;
+
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaWebView;
 import org.apache.cordova.PluginResult;
-import org.apache.cordova.PluginResult.Status;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import android.content.Context;
-import android.graphics.Rect;
-import android.util.DisplayMetrics;
-import android.view.View;
-import android.view.ViewTreeObserver.OnGlobalLayoutListener;
-import android.view.inputmethod.InputMethodManager;
-
 // import additionally required classes for calculating screen height
-import android.view.Display;
-import android.graphics.Point;
-import android.os.Build;
 
 public class IonicKeyboard extends CordovaPlugin {
     private OnGlobalLayoutListener list;
@@ -59,7 +58,7 @@ public class IonicKeyboard extends CordovaPlugin {
         if ("init".equals(action)) {
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
-                	//calculate density-independent pixels (dp)
+                    //calculate density-independent pixels (dp)
                     //http://developer.android.com/guide/practices/screens_support.html
                     DisplayMetrics dm = new DisplayMetrics();
                     cordova.getActivity().getWindowManager().getDefaultDisplay().getMetrics(dm);
@@ -67,8 +66,10 @@ public class IonicKeyboard extends CordovaPlugin {
 
                     //http://stackoverflow.com/a/4737265/1091751 detect if keyboard is showing
                     rootView = cordova.getActivity().getWindow().getDecorView().findViewById(android.R.id.content).getRootView();
+
                     list = new OnGlobalLayoutListener() {
                         int previousHeightDiff = 0;
+
                         @Override
                         public void onGlobalLayout() {
                             Rect r = new Rect();
@@ -85,32 +86,31 @@ public class IonicKeyboard extends CordovaPlugin {
                             //http://stackoverflow.com/a/29257533/3642890 beware of nexus 5
                             int screenHeight;
 
-                            if (Build.VERSION.SDK_INT >= 21) {
-                                Display display = cordova.getActivity().getWindowManager().getDefaultDisplay();
-                                Point size = new Point();
-                                display.getSize(size);
-                                screenHeight = size.y;
-                            } else {
+//                            if (Build.VERSION.SDK_INT >= 21) {
+//                                Display display = cordova.getActivity().getWindowManager().getDefaultDisplay();
+//                                Point size = new Point();
+//                                display.getSize(size);
+//                                screenHeight = size.y;
+//                            } else {
                                 screenHeight = rootViewHeight;
-                            }
+//                            }
 
                             int heightDiff = screenHeight - resultBottom;
 
-                            int pixelHeightDiff = (int)(heightDiff / density);
+                            int pixelHeightDiff = (int) (heightDiff / density);
                             if (pixelHeightDiff > 100 && pixelHeightDiff != previousHeightDiff) { // if more than 100 pixels, its probably a keyboard...
                                 String msg = "S" + Integer.toString(pixelHeightDiff);
                                 result = new PluginResult(PluginResult.Status.OK, msg);
                                 result.setKeepCallback(true);
                                 callbackContext.sendPluginResult(result);
-                            }
-                            else if ( pixelHeightDiff != previousHeightDiff && ( previousHeightDiff - pixelHeightDiff ) > 100 ){
-                            	String msg = "H";
+                            } else if (pixelHeightDiff != previousHeightDiff && (previousHeightDiff - pixelHeightDiff) > 100) {
+                                String msg = "H";
                                 result = new PluginResult(PluginResult.Status.OK, msg);
                                 result.setKeepCallback(true);
                                 callbackContext.sendPluginResult(result);
                             }
                             previousHeightDiff = pixelHeightDiff;
-                         }
+                        }
                     };
 
                     rootView.getViewTreeObserver().addOnGlobalLayoutListener(list);
